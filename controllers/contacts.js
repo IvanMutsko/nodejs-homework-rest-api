@@ -4,48 +4,39 @@ const { Ingredient } = require("../models/ingredients");
 const { Types, model } = require("mongoose");
 
 const listContacts = async (req, res) => {
-  const result = await Ingredient.aggregate([
+  const { search } = req.params;
+
+  const result = await Recipe.aggregate([
     {
-      $lookup: {
-        from: "recipes",
-        pipeline: [
-          {
-            $match: {
-              ingredients: {
-                $elemMatch: {
-                  id: new Types.ObjectId("640c2dd963a319ea671e3668"),
-                },
-              },
-            },
-          },
-          {
-            $project: {
-              recipes: {
-                hhh: "$_id",
-                title: "$title",
-                // thumb: "$thumb",
-                time: "$time",
-              },
-            },
-          },
-          {
-            $replaceRoot: {
-              newRoot: "$recipes",
-            },
-          },
-        ],
-        as: "aszxdc",
+      $match: {
+        title: { $regex: search, $options: "i" },
       },
     },
     {
-      $match: {
-        _id: new Types.ObjectId("640c2dd963a319ea671e3668"),
+      $group: {
+        _id: null,
+        list: {
+          $push: "$$ROOT",
+          // $push: {
+          //   title: "$title",
+          //   time: "$time",
+          // },
+        },
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        // list: { $arrayElemAt: ["$list", 5] },
+        // count: 1,
       },
     },
   ]);
-  res.json(result);
+  res.json(result[0]);
 };
 
+// $count: "recipe";
 // const getContactById = async (req, res) => {
 //   const { contactId } = req.params;
 //   const result = await Contact.findById(contactId);
